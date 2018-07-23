@@ -30,6 +30,7 @@ public class LoadGenerator {
 
         Histogram hdrHistogram = new Histogram(3);
 
+        System.out.println("**Starting load generation**");
         for (int i=0;i<20;i++) {
             List<Callable<Latency>> tasks = new ArrayList<>();
             IntStream.range(0, totalThreads).forEach(j -> tasks.add(() -> callService(++requestId)));
@@ -39,19 +40,18 @@ public class LoadGenerator {
                     Latency latency = results.get(t).get();
                     measurements[latency.getRequestId()]=latency.getTimeTaken();
                     hdrHistogram.recordValue(latency.getTimeTaken());
-                    System.out.println(latency);
+                    //System.out.println(latency);
                 }
+                System.out.println("Iteration "+i+" complete");
                 Thread.sleep(10000);
             } catch (Exception e) {
                 System.out.println(e.getMessage() +":" + requestId);
             }
         }
+        System.out.println("**Completed load generation**");
         executorService.shutdown();
 
         Arrays.sort(measurements);
-        for (int k=0;k<measurements.length;k++) {
-            System.out.println(k +":"+measurements[k]);
-        }
 
         System.out.println("Latency Measurements with HDR Histogram- ");
         System.out.println("Minimum = "+hdrHistogram.getMinValue());
