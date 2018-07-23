@@ -19,37 +19,39 @@ import java.util.stream.IntStream;
  */
 public class LoadGenerator {
 
-
-    static int TOTAL_THREADS = 800;
     static int requestId = -1;
-    static int ITERATIONS = TOTAL_THREADS * 35;
-    static long[] MEASUREMENTS = new long[ITERATIONS];
+    static int totalThreads = 100;
+    static int iterations = totalThreads * 20;
+    static long[] measurements = new long[iterations];
 
     public static void main(String[] args) {
 
-        ExecutorService executorService = Executors.newFixedThreadPool(TOTAL_THREADS);
+        ExecutorService executorService = Executors.newFixedThreadPool(totalThreads);
 
         Histogram hdrHistogram = new Histogram(3);
 
-        for (int i=0;i<35;i++) {
+        for (int i=0;i<20;i++) {
             List<Callable<Latency>> tasks = new ArrayList<>();
-            IntStream.range(0,TOTAL_THREADS).forEach(j -> tasks.add(() -> callService(++requestId)));
+            IntStream.range(0, totalThreads).forEach(j -> tasks.add(() -> callService(++requestId)));
             try {
                 List<Future<Latency>> results = executorService.invokeAll(tasks);
                 for (int t=0;t<results.size();t++) {
                     Latency latency = results.get(t).get();
-                    MEASUREMENTS[latency.getRequestId()]=latency.getTimeTaken();
+                    measurements[latency.getRequestId()]=latency.getTimeTaken();
                     hdrHistogram.recordValue(latency.getTimeTaken());
                     System.out.println(latency);
                 }
-                Thread.sleep(5000);
+                Thread.sleep(10000);
             } catch (Exception e) {
                 System.out.println(e.getMessage() +":" + requestId);
             }
         }
         executorService.shutdown();
 
-        Arrays.sort(MEASUREMENTS);
+        Arrays.sort(measurements);
+        for (int k=0;k<measurements.length;k++) {
+            System.out.println(k +":"+measurements[k]);
+        }
 
         System.out.println("Latency Measurements with HDR Histogram- ");
         System.out.println("Minimum = "+hdrHistogram.getMinValue());
@@ -64,14 +66,14 @@ public class LoadGenerator {
 
 
         System.out.println("Latency Measurements with arrays of raw data- ");
-        System.out.println("Minimum = "+MEASUREMENTS[0]);
-        System.out.println("50%'ile = "+MEASUREMENTS[ITERATIONS/2]);
-        System.out.println("90%'ile = "+MEASUREMENTS[(int)(90*ITERATIONS/100)]);
-        System.out.println("95%'ile = "+MEASUREMENTS[(int)(95*ITERATIONS/100)]);
-        System.out.println("99%'ile = "+MEASUREMENTS[(int)(99*ITERATIONS/100)]);
-        System.out.println("99.9%'ile = "+MEASUREMENTS[(int)(999*ITERATIONS/1000)]);
-        System.out.println("99.99%'ile = "+MEASUREMENTS[(int)(9999*ITERATIONS/10000)]);
-        System.out.println("Maximum = "+ MEASUREMENTS[ITERATIONS-1]);
+        System.out.println("Minimum = "+ measurements[0]);
+        System.out.println("50%'ile = "+ measurements[iterations /2]);
+        System.out.println("90%'ile = "+ measurements[(int)(90* iterations /100)]);
+        System.out.println("95%'ile = "+ measurements[(int)(95* iterations /100)]);
+        System.out.println("99%'ile = "+ measurements[(int)(99* iterations /100)]);
+        System.out.println("99.9%'ile = "+ measurements[(int)(999* iterations /1000)]);
+        System.out.println("99.99%'ile = "+ measurements[(int)(9999* iterations /10000)]);
+        System.out.println("Maximum = "+ measurements[iterations -1]);
 
     }
 
@@ -84,7 +86,7 @@ public class LoadGenerator {
             loadUrl = new URL("http://localhost:9090/pk/test?id=" + (++requestId));
             connection = (HttpURLConnection) loadUrl.openConnection();
             connection.setRequestMethod("GET");
-            connection.setReadTimeout(20000);
+            connection.setReadTimeout(50000);
             connection.connect();
 
             int responseCode = connection.getResponseCode();

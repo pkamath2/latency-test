@@ -14,10 +14,8 @@ public class TestController {
     public String restTest(@RequestParam(name = "id") int requestId){
 
         try {
-            if(requestId % 500 == 0 && requestId % 1000 != 0){
+            if(requestId == 1000){
                 Thread.sleep((10000));
-            }else {
-                Thread.sleep(100);
             }
         } catch (InterruptedException e) {
            //Do Nothing
