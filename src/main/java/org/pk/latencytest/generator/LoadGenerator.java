@@ -8,10 +8,7 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
+import java.util.concurrent.*;
 import java.util.stream.IntStream;
 
 /**
@@ -28,7 +25,7 @@ public class LoadGenerator {
 
         ExecutorService executorService = Executors.newFixedThreadPool(totalThreads);
 
-        Histogram hdrHistogram = new Histogram(3);
+        Histogram hdrHistogram = new Histogram(TimeUnit.MINUTES.toNanos(2),3);
 
         System.out.println("**Starting load generation**");
         for (int i=0;i<20;i++) {
@@ -64,6 +61,7 @@ public class LoadGenerator {
         System.out.println("99.99%'ile = "+hdrHistogram.getValueAtPercentile(99.99));
         System.out.println("Maximum = "+ hdrHistogram.getMaxValue());
 
+        hdrHistogram.outputPercentileDistribution(System.out, 1000.0);
 
         System.out.println("Latency Measurements with arrays of raw data- ");
         System.out.println("Minimum = "+ measurements[0]);
